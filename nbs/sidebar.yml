@@ -1,0 +1,12 @@
+website:
+  sidebar:
+    contents:
+      - index.ipynb
+      - 00_core.ipynb
+      - 01_message.ipynb
+      - 02_fallacies.ipynb
+      - 03_models.ipynb
+      - 04_retriever.ipynb
+      - 05_download_dataset.ipynb
+      - 06_memory_explore.ipynb
+      - 07_agent.ipynb
