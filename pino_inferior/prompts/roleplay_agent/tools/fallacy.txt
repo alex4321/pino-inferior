@@ -1,0 +1,3 @@
+Fallacy search tool.
+Returns the comment regards your opponent fallacies, if it sees any.
+Call it this way: [fallacy] what do you want to check for fallacies [/fallacy][call]

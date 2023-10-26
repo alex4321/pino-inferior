@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "git@github.com:alex4321/pino-inferior.git"
+  site-url: "https://alex4321.github.io/git@github.com:alex4321/pino-inferior.git"
+  description: ""
+  repo-branch: main
+  repo-url: "https://github.com/alex4321/git@github.com:alex4321/pino-inferior.git"

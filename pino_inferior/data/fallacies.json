@@ -1,0 +1,101 @@
+[
+    {
+        "name": "Argumentum ad Hominem (Personal Attack)",
+        "description": "Identify this when the speaker attacks the character, motive, or attributes of the person making the argument, rather than attacking the substance of the argument itself.",
+        "example": {
+            "text": " in large part because of tax policies that slash taxes on\n failed to invest in the middle class, took their eyes off of Wall Street,\n and created a perfect storm.\n And in fact, Donald was one of the people who rooted for the housing crisis.\n He said back in 2006, gee, I hope it does collapse, because then I can go.\n in and buy some and make some money. Well, it did collapse. That's called business, but... Nine million dollars.\n million people lost their jobs.\n Five million people lost their homes and $13 trillion in family wealth.\n",
+            "response": "Ad Hominem & Anecdotal Evidence - The speaker criticizes Donald for allegedly rooting for the housing crisis, which is an attack on his character instead of engaging with his policies or positions. This suggests an ad hominem fallacy. The speaker also uses anecdotal evidence, citing a specific statement allegedly made by Donald in 2006, which does not provide comprehensive evidence for the argument about the cause and effects of the housing crisis. While the statistics about job loss, home loss, and loss of family wealth might be accurate, they are used here to support an argument that is otherwise based on personal attack and anecdotal evidence."    
+        }
+    },
+    {
+        "name": "Argumentum ad Populum (Appeal to Popular Opinion)",
+        "description": "Look for claims that are justified solely because 'everyone else believes it' or 'it is popular.'",
+        "example": {
+            "text": "Looking forward to this, Mr. President.\nI\nThe American people have a right\nto have a say in who the Supreme Court nominee is. And that say occurs.\n",
+            "response": "Appeal to Popular Belief fallacy - The speaker suggests that since the American people have a right to have a say in the Supreme Court nominee selection, such an occurrence is therefore valid and necessary. Such an assertion is not an inherently flawed argument, as democratic values rely heavily on public participation; however, the fallacy lies in solely invoking this popular belief as legitimization for their argument without providing any other supporting evidence or rationale. It infers that just because something is popularly believed or desired, it must be the right course of action, which is not necessarily true. Different constitutional interpretations and political considerations might influence the appropriateness of public input in the Supreme Court appointment process, and these nuances are not addressed in the statement."    
+        }
+    },
+    {
+        "name": "Argumentum ad Ignorantiam (Appeal to Ignorance)",
+        "description": "Spot this fallacy when the argument asserts that a proposition is true because it has not been proven false, or vice versa.",
+        "example": null
+    },
+    {
+        "name": "Argumentum ad Misericordiam (Appeal to Pity)",
+        "description": "Identify when emotional appeals like sympathy, pity, or fear are used instead of logical reasons to persuade the audience.",
+        "example": null
+    },
+    {
+        "name": "Argumentum ad Baculum (Appeal to Force)",
+        "description": "Notice when threats or force are used to win an argument, rather than logic or evidence.",
+        "example": null
+    },
+    {
+        "name": "Slippery Slope",
+        "description": "Look out for claims that one event will inevitably follow from another without adequate evidence to support such a claim.",
+        "example": null
+    },
+    {
+        "name": "False Dichotomy",
+        "description": "Identify when only two choices are presented as the only options, while in reality, more options exist.",
+        "example": null
+    },
+    {
+        "name": "Begging the Question (Circular Reasoning)",
+        "description": "Recognize this when the conclusion is already assumed in the premises, essentially forming a circle in reasoning.",
+        "example": {
+            "text": " But I want to do things that haven't been done, including fixing and making\n our inner cities better for the African American citizens that are so great.\n And for the Latinos, Hispanics.\n And I look forward to doing it. It's called Make.\n America, great again. Thank you, Mr. Trump.\n The question from Patrice was about, are you both modeling positive and appropriate behaviors for today's debate?\n We received a lot of questions online, Mr. Trump about the tape that was released on Friday.\n You called what you said locker room banter. You described kissing women without consent.\n",
+            "response": "Begging the Question & Appeal to Emotion - The speaker asserts they want to accomplish things that haven't been done before, such as improving inner cities for African American and Latino\/Hispanic citizens, but does not provide any specific plans or actions on how these goals will be reached. The phrase \"America, great again\" does not answer how the speaker plans to achieve this. This could be seen as an appeal to emotion, as the speaker uses patriotic language without offering direct actions or concrete facts to back up the claim. The second part calling out Mr. Trump's previous statement, while it might contain some condescending tone, doesn't present any logical fallacies as it is merely stating the previously made remarks."    
+        }
+    },
+    {
+        "name": "Straw Man Fallacy",
+        "description": "Look for instances where an argument is misrepresented to make it easier to attack.",
+        "example": null
+    },
+    {
+        "name": "Red Herring",
+        "description": "Identify when the argument goes off on a tangent, providing irrelevant information to distract from the main issue.",
+        "example": {
+            "text": " we had an almost $800 billion trade deficit. In other words,\n trading with other countries. We had an eight.\n hundred billion dollar deficit. It's hard to believe inconceivable.\n You say who's making these deals?\n We're going to make great trade deals. We're going to have a strong border.\n We're going to bring back law and order.\n just today.\n Police and wishes...\n",
+            "response": "Red Herring & Oversimplification - The speaker starts by mentioning the \"$800 billion trade deficit\" to focus attention on fiscal matters, but then quickly shifts the topic to \"we're going to have a strong border\" and \"bring back law and order,\" which are unrelated to the trade deficit. This could be considered a Red Herring fallacy as it distracts from the original topic without addressing it. Also, the speaker's claim that they will \"make great trade deals\" oversimplifies the complexities of international trade negotiations and economics. This reductionist approach does not provide a clear or comprehensive plan to address the issue highlighted."
+        }
+    },
+    {
+        "name": "Hasty Generalization",
+        "description": "Notice when conclusions are drawn based on insufficient or unrepresentative evidence.",
+        "example": {
+            "text": " You go to New England, you go to Ohio, Pennsylvania, you go anywhere you want to go.\n to return to Clinton, and you will see devastation where manufacturers down 30, 40, some of the\n Sometimes 50 percent. NAFTA is the worst trade deal maybe ever signed anywhere but-\n certainly ever signed into this country. And now, you want to approve Trans-Pacific Partnership.\n were totally in favor of it. Then you heard what I was saying, how bad it is, and you said, I can't win that debate.\n But you know that if you did win, you would approve that, and that will be almost as bad as now.\n after.\n was against it once it was finally negotiated and the\n",
+            "response": "Hasty Generalization & Post Hoc Ergo Propter Hoc - The speaker generalizes that visiting any region will reveal devastation in the manufacturing industry, implying that all areas exhibit the same results, which might not be true. This is a hasty generalization. The speaker also suggests that NAFTA is entirely to blame for the downturn in manufacturing, without considering other contributing factors. This is an instance of post hoc ergo propter hoc (after this, therefore because of this) fallacy. \nStrawman - The speaker accuses their opponent of supporting the Trans-Pacific Partnership only after hearing their own arguments against it, thus misrepresenting their opponent's stance to make it easier to criticize. This is a strawman fallacy."    
+        }
+    },
+    {
+        "name": "Equivocation",
+        "description": "Look for ambiguous language that can be interpreted in more than one way, used intentionally to mislead or confuse.",
+        "example": null
+    },
+    {
+        "name": "Contradicting (Inconsistent) statements the same author",
+        "description": "People may contradict/being inconsistent themselves directly or indirectly. To find this issue you should see all the messages and see if their meaning are not compatible with each other. It may not always be obvious contradiction, just possibly - but for the sake of debate we'll count such a contradiction.",
+        "example": {
+            "text": "xxx: Nobody goes to that restaurant?\nyyy: Why?\nxxx: I don't know. I just didn't like it, neither was my acquintances.\nyyy: But why? Can you remember?\nxxx: Oh, it was too crowded",
+            "response": "Multiple contradicting statements - The xxx speaker once said nobody goes to that restaurant. Than after remembering why he hidn't like it - he remembered it was too vrowdy, which contradict initial statement."
+        }
+    },
+    {
+        "name": "Misleading Vividness",
+        "description": "Misleading Vividness is a fallacy in which a very small number of particularly dramatic events are taken to outweigh a significant amount of statistical evidence.",
+        "example": {
+            "text": " I have gotten to know the people of the country over the last year and a half that I've been\n doing this as a politician.\n I cannot believe I'm saying that about myself, but I guess I have been a politician.\n and my whole concept.\n was to make America great again. When I watch\n The deals being made when I watch what's happening with\n Some horrible things like Obamacare where your health insurance and health care is going up.\n by numbers that are astronomical 68%, 59%, 70%.\n",
+            "response": "Misleading Vividness - The speaker claims that healthcare costs are rising \"by numbers that are astronomical 68%, 59%, 70%.\" This presents an instance of a logical fallacy referred to as misleading vividness. While the numbers are presented as evidence, there is no context given; it's not clear what these percentages represent or where they are sourced. This makes the argument likely to mislead or create a false impression."    
+        }
+    },
+    {
+        "name": "Appeal to Fear",
+        "description": "An appeal to fear is a fallacy in which a person attempts to create support for an idea by attempting to increase fear towards an alternative",
+        "example": {
+            "text": "We're going to make great trade deals. We're going to have a strong border.\n We're going to bring back law and order.\n just today.\n Police and wishes...\n killed, and this is happening on a weekly basis.\n We have to bring back\n respect to law enforcement. At the same time, we have to take care of people on all sides.\n We need justice.\n",
+            "response": "Oversimplification & Appeal to Fear - The speaker proposes to \"make great trade deals,\" \"have a strong border,\" and \"bring back law and order,\" which are deregatory claims that oversimplify complex issues. Additionally, the speaker's statement, \"Police and wishes... killed, and this is happening on a weekly basis,\" is an attempt to instill fear in the audience as a means to garner support for their policies to bring back respect for law enforcement and ensure justice. This appeal to fear is manipulative and doesn't provide a logical or comprehensive solution to the problem presented."
+        }
+    }
+]

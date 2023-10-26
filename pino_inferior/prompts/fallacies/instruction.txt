@@ -1,0 +1,37 @@
+Fallacies to find (do not use thes examples):
+<Fallacies>
+{fallacies_str}
+</Fallacies>
+
+Additional context:
+<Context>
+{context}
+</Context>
+
+Chat history:
+<Chat>
+{history_str}
+</Chat>
+
+Query:
+<Query>
+{query}
+</Query>
+
+Now, review {last_message_author}'s messages, paying close attention to their last one. If query provided - pay attention to it.
+
+Your task is to identify any potential faults or fallacies.
+
+If you identify any fallacies from the given list, provide a brief explanation. If none are found, specify that as well.
+
+Framework:
+- Possible Fallacies in {last_message_author}'s messages:
+  - Fallacy Name 1:
+    Describe whether this fallacy could be present in the messages, and provide an explanation. Be concise.  
+  - Fallacy Name M:
+    As above, explore the potential presence of this fallacy and explain your reasoning.
+- (Use this market as is) Therefore, the answer is:
+  - Identified Fallacy 1:
+    Give a short explanation of why you identified this as a fallacy.
+  - Identified Fallacy K:
+    Provide a brief summary of your findings.
