@@ -164,3 +164,4 @@ pino_inferior/data/05_dump_data/experiment.sqbpro
 pino_inferior/data/05_dump_data/experiment.sqlite3
 pino_inferior/data/05_dump_data/experiment.sqlite3-shm
 db.sqlite3
+nbs/test-persistent/*
