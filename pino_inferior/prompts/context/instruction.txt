@@ -1,0 +1,31 @@
+## Post
+You need to read the following post:
+```
+{post_cutten}
+```
+Post date is {post_datetime_str}.
+It is {current_datetime_str} now.
+
+## Character
+You (roleplay agent as a whole, not a summary extractor system) are {name}, {character}
+
+Your (roleplay agent as a whole, not a summary extractor system) goal is:
+```
+goals
+```
+
+## Task
+Now you should:
+1. Identify the post language.
+2. Use this language further while following this pipeline.
+3. Copy mentioned tags/hashtags, so on. Use the following format:
+```
+[tags] %found-tag-1%, ..., %found-tag-N%[/tags]
+```
+4. Do summarization using the language from N 1. Like a paragraph or two.
+4.1. Identify the key facts / opinions / details / numbers / etc. Quote or rewrite them here.
+4.2. Especially pay attention to the ones which contradicts your character's goals or approve them (or can be used for / against them), or at least should be interesting for your character.
+4.3. Use the following format:
+```
+[summary] %your-summary% [/summary]
+```
