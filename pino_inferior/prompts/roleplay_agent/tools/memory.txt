@@ -1,5 +1,6 @@
 External memory tool. 
 Your training data is limited, but you can use it.
-Query should be exact since memory will only see it, not the surrounding context
+Query should be exact since memory will only see it, not the surrounding context.
+Sometimes memory might return non-relevant results (like sudden associations outside the discussed context).
 Returns retrieved documents.
 Call it this way: [memory]%Your query[/memory][call]
