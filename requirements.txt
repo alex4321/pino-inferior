@@ -7,7 +7,6 @@ tiktoken
 python-dotenv
 sqlalchemy[asyncio]
 alembic
-pymilvus
 datapipe-core
 goose3[all]
 aiosqlite
