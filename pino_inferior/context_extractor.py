@@ -8,7 +8,7 @@ __all__ = ['CONTEXT_PROMPT_DIR', 'CONTEXT_INPUT_TEXT', 'CONTEXT_INPUT_POST_TIME'
            'context_system_prompt', 'context_instruction_prompt', 'context_llm_prompt', 'LengthConfig',
            'PromptMarkupConfig', 'build_context_extractor_chain']
 
-# %% ../nbs/08_context_extractor.ipynb 1
+# %% ../nbs/08_context_extractor.ipynb 4
 import os
 from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTemplate, ChatPromptTemplate
 from langchain.chains import TransformChain
@@ -22,10 +22,10 @@ from langchain.schema.runnable import RunnableSequence
 import tiktoken
 from dataclasses import dataclass
 
-# %% ../nbs/08_context_extractor.ipynb 2
+# %% ../nbs/08_context_extractor.ipynb 5
 CONTEXT_PROMPT_DIR = os.path.join(PROMPTS_DIR, "context")
 
-# %% ../nbs/08_context_extractor.ipynb 3
+# %% ../nbs/08_context_extractor.ipynb 6
 CONTEXT_INPUT_TEXT = "text"
 CONTEXT_INPUT_POST_TIME = "post_datetime"
 CONTEXT_INPUT_GOALS = "goals"
@@ -40,12 +40,12 @@ CONTEXT_INTERMEDIATE_LLM_OUTPUT = "llm_output"
 
 CONTEXT_OUTPUT_CONTEXT = "context"
 
-# %% ../nbs/08_context_extractor.ipynb 4
+# %% ../nbs/08_context_extractor.ipynb 8
 def _read_file(fname: str) -> str:
     with open(fname, "r", encoding="utf-8") as src:
         return src.read()
 
-# %% ../nbs/08_context_extractor.ipynb 5
+# %% ../nbs/08_context_extractor.ipynb 9
 context_system_prompt = SystemMessagePromptTemplate.from_template(_read_file(
     os.path.join(CONTEXT_PROMPT_DIR, "system.txt")
 ))
@@ -54,7 +54,7 @@ context_instruction_prompt = HumanMessagePromptTemplate.from_template(_read_file
 ))
 context_llm_prompt = ChatPromptTemplate.from_messages([context_system_prompt, context_instruction_prompt])
 
-# %% ../nbs/08_context_extractor.ipynb 6
+# %% ../nbs/08_context_extractor.ipynb 10
 def _build_preprocess_conversion(length_function: Callable[[str], int],
                                  cut_function: Callable[[str, int], int],
                                  max_goals_length: int,
@@ -92,16 +92,26 @@ def _build_preprocess_conversion(length_function: Callable[[str], int],
                                             CONTEXT_INTERMEDIATE_CURRENT_TIME_STR,
                                             CONTEXT_INTERMEDIATE_POST_CUTTEN])
 
-# %% ../nbs/08_context_extractor.ipynb 7
-def _build_llm_output_parser(tags_open_marker: str, tags_close_marker: str, 
-                             summary_open_marker: str, summary_close_marker: str) -> TransformChain:
+# %% ../nbs/08_context_extractor.ipynb 11
+def _build_llm_output_parser(
+    length_function: Callable[[str], int],
+    cut_function: Callable[[str, int], str],
+    max_context_length: int,
+    tags_open_marker: str,
+    tags_close_marker: str,
+    summary_open_marker: str,
+    summary_close_marker: str
+) -> TransformChain:
     def _func(response: dict) -> dict:
         ai_message: AIMessage = response[CONTEXT_INTERMEDIATE_LLM_OUTPUT]
         tags = None
         if tags_open_marker in ai_message.content and tags_close_marker in ai_message.content:
             tags = ai_message.content.split(tags_open_marker)[-1].split(tags_close_marker)[0]
         summary = ai_message.content.split(summary_open_marker)[-1].split(summary_close_marker)[0]
-        return {CONTEXT_OUTPUT_CONTEXT: f"[tags]{tags}[/tags]\n{summary}"}
+        response = f"[tags]{tags}[/tags]\n{summary}"
+        if length_function(response) > max_context_length:
+            response = cut_function(response, max_context_length)
+        return {CONTEXT_OUTPUT_CONTEXT: response}
     
     async def _afunc(response: AIMessage) -> dict:
         return _func(response)
@@ -110,7 +120,7 @@ def _build_llm_output_parser(tags_open_marker: str, tags_close_marker: str,
                           input_variables=[CONTEXT_INTERMEDIATE_LLM_OUTPUT],
                           output_variables=[CONTEXT_OUTPUT_CONTEXT])
 
-# %% ../nbs/08_context_extractor.ipynb 8
+# %% ../nbs/08_context_extractor.ipynb 12
 def _build_context_extractor(llm: BaseChatModel,
                              length_function: Callable[[str], int],
                              cut_function: Callable[[str, int], int],
@@ -118,6 +128,7 @@ def _build_context_extractor(llm: BaseChatModel,
                              max_name_length: int,
                              max_character_length: int,
                              max_post_length: int,
+                             max_context_length: int,
                              tags_open_marker: str,
                              tags_close_marker: str, 
                              summary_open_marker: str,
@@ -131,6 +142,9 @@ def _build_context_extractor(llm: BaseChatModel,
         max_post_length,
     )
     output_parser = _build_llm_output_parser(
+        length_function,
+        cut_function,
+        max_context_length,
         tags_open_marker,
         tags_close_marker,
         summary_open_marker,
@@ -138,26 +152,36 @@ def _build_context_extractor(llm: BaseChatModel,
     )
     return stringify | context_llm_prompt | llm | output_parser
 
-# %% ../nbs/08_context_extractor.ipynb 9
+# %% ../nbs/08_context_extractor.ipynb 14
 @dataclass
 class LengthConfig:
+    """
+    Context extractor text length config
+    """
     cut_function: Callable[[str, int], str]
     length_function: Callable[[str], int]
     max_goals_length: int = 256
     max_name_length: int = 10
     max_character_length: int = 256
     max_post_length: int = 2048
+    max_response_length: int = 512
 
 
 @dataclass
 class PromptMarkupConfig:
+    """
+    Context extractor parsing sequences (described in prompt)
+    """
     tags_open_sequence: str = "[tags]"
     tags_close_sequence: str = "[/tags]"
-    summary_open_sequence: str = "[tags]"
-    summary_close_sequence: str = "[/tags]"
+    summary_open_sequence: str = "[summary]"
+    summary_close_sequence: str = "[/summary]"
 
 
 def build_context_extractor_chain(llm: BaseChatModel, lengths: LengthConfig, prompts: PromptMarkupConfig) -> RunnableSequence:
+    """
+    Build context extraction LLM chain
+    """
     return _build_context_extractor(
         llm,
         length_function=lengths.length_function,
@@ -166,6 +190,7 @@ def build_context_extractor_chain(llm: BaseChatModel, lengths: LengthConfig, pro
         max_name_length=lengths.max_name_length,
         max_character_length=lengths.max_character_length,
         max_post_length=lengths.max_post_length,
+        max_context_length=lengths.max_response_length,
         tags_open_marker=prompts.tags_open_sequence,
         tags_close_marker=prompts.tags_close_sequence,
         summary_open_marker=prompts.summary_open_sequence,

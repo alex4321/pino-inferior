@@ -22,10 +22,16 @@ Now you should:
 ```
 [tags] %found-tag-1%, ..., %found-tag-N%[/tags]
 ```
-4. Do summarization using the language from N 1. Like a paragraph or two.
+4. Do summarization using the language from N 1. Like:
 4.1. Identify the key facts / opinions / details / numbers / etc. Quote or rewrite them here.
 4.2. Especially pay attention to the ones which contradicts your character's goals or approve them (or can be used for / against them), or at least should be interesting for your character.
 4.3. Use the following format:
 ```
-[summary] %your-summary% [/summary]
+[summary]
+- Key idea 1 summary (1 sentence, the same language as the text):
+Key quotes regards idea 1 (a few sentences)
+...
+- Key idea N summary (1 sentence, the same language as the text):
+Key quotes regards idea N (a few sentences)
+[/summary]
 ```

@@ -5,7 +5,7 @@ __all__ = ['TEXT_HASH_COLUMN', 'INPUT_RETRIEVER_QUERY', 'INTERMEDIATE_RETRIEVER_
            'BLACKLISTED_META_PROPERTIES', 'ScoreProcessing', 'md5string', 'ParagraphSplitter', 'SentenceSplitter',
            'SequentialSplitter', 'Memory']
 
-# %% ../nbs/04_retriever.ipynb 1
+# %% ../nbs/04_retriever.ipynb 3
 import re
 from typing import List, Set, Dict, Callable, Tuple, Union
 import hashlib
@@ -27,14 +27,14 @@ from langchain.chains import TransformChain
 import pandas as pd
 import asyncio
 
-# %% ../nbs/04_retriever.ipynb 3
+# %% ../nbs/04_retriever.ipynb 5
 TEXT_HASH_COLUMN = "ParagraphHash"
 
-# %% ../nbs/04_retriever.ipynb 4
+# %% ../nbs/04_retriever.ipynb 6
 def md5string(text: str) -> str:
     return hashlib.md5(text.encode("utf-8")).hexdigest()
 
-# %% ../nbs/04_retriever.ipynb 5
+# %% ../nbs/04_retriever.ipynb 7
 class ParagraphSplitter:
     def split_text(self, text: str) -> List[Document]:
         return [
@@ -42,7 +42,7 @@ class ParagraphSplitter:
             for item in text.split("\n")
         ]
 
-# %% ../nbs/04_retriever.ipynb 6
+# %% ../nbs/04_retriever.ipynb 8
 class SentenceSplitter:
     def __init__(self):
         self.separators=["\.\s", "\?", "\!"]
@@ -60,7 +60,7 @@ class SentenceSplitter:
     def split_text(self, text: str) -> List[Document]:
         return self._split_rest_separators(text, self.separators)
 
-# %% ../nbs/04_retriever.ipynb 7
+# %% ../nbs/04_retriever.ipynb 9
 class SequentialSplitter:
     def __init__(self, splitters: list) -> None:
         self.splitters = splitters
@@ -85,8 +85,12 @@ class SequentialSplitter:
     def split_text(self, text: str) -> List[Document]:
         return self._split_inner(text, self.splitters)
 
-# %% ../nbs/04_retriever.ipynb 9
+# %% ../nbs/04_retriever.ipynb 11
 async def _remove_known_paragraphs(session: AsyncSession, paragraphs: List[Document]) -> List[Document]:
+    """
+    Filter a paragraph to remember only new ones (paragraphs might be shared between documents)
+    """
+    # Query by paragraph MD5
     hashes = set()
     for document in paragraphs:
         assert TEXT_HASH_COLUMN in document.metadata
@@ -96,36 +100,49 @@ async def _remove_known_paragraphs(session: AsyncSession, paragraphs: List[Docum
         ParagraphMemoryRecord.md5.in_(hashes)
     )
     sql_search = await session.scalars(sql_query)
+    # Build a set of md5-text pairs to filter only the non-known combinations
+    #  (can't be just md5 because of potential collisions)
     blacklisted_pairs = set()
     for record in sql_search:
         blacklisted_pairs.add((record.md5, record.text))
+    # Filter itself
     result = []
     for document in paragraphs:
         pair = (document.metadata[TEXT_HASH_COLUMN], document.page_content)
         if pair not in blacklisted_pairs:
             result.append(document)
+            # Add to blacklist in case of duplicated paragraphs within same insert query
             blacklisted_pairs.add(pair)
     return result
 
 
-# %% ../nbs/04_retriever.ipynb 10
+# %% ../nbs/04_retriever.ipynb 12
 async def _store_paragraphs(documents_paragraphs: List[Document],
                             sentence_splitter: SentenceSplitter,
                             engine: AsyncEngine,
                             vectorstore: VectorStore):
-    
+    """
+    Store given paragraphs
+    """
     def _prepare_sentence_documents(text: str, metadata: dict) -> List[Document]:
+        """
+        Split paragraph to a list of Documents representing individual sentences
+        """
         result = []
         for item in sentence_splitter.split_text(document.page_content):
             item_metadata = dict(**metadata)
             item_text_full = ""
+            # Join metadata to the sentence
             for key in metadata:
                 if key == TEXT_HASH_COLUMN:
                     continue
                 item_text_full = f"{item_text_full} : {metadata[key]}"
+            # Join main text
             item_text_full = f"{item_text_full} : {item.page_content}"
             item_text_full = item_text_full.strip(" :")
+            # Store original text in the metadata
             item_metadata["_text"] = text
+            # Create document
             result.append(Document(
                 page_content=item_text_full,
                 metadata=item_metadata,
@@ -136,8 +153,10 @@ async def _store_paragraphs(documents_paragraphs: List[Document],
     assert isinstance(engine, AsyncEngine)
     async with AsyncSession(engine) as session:
         async with session.begin():
+            # Remove known paragraphs
             documents_paragraphs = await _remove_known_paragraphs(session,
                                                                   documents_paragraphs)
+            # Prepare paragraphs to store in the ORM and sentences to store in the vector DB
             records = []
             for document in documents_paragraphs:
                 assert TEXT_HASH_COLUMN in document.metadata
@@ -154,22 +173,34 @@ async def _store_paragraphs(documents_paragraphs: List[Document],
                     document.page_content,
                     metadata=document.metadata,
                 )
-            
+            # Add paragraphs to the DB
             session.add_all(records)
+        # Add sentences to the vector DB
         if sentences_to_add:
             vectorstore.add_documents(sentences_to_add)
 
-# %% ../nbs/04_retriever.ipynb 11
-async def _get_paragraphs(sentence_vector_search_document_scores: List[Tuple[Document, float]], engine: Engine) -> \
-    List[Tuple[ParagraphMemoryRecord, float]]:
+# %% ../nbs/04_retriever.ipynb 13
+async def _get_paragraphs(
+    sentence_vector_search_document_scores: List[Tuple[Document, float]],
+    engine: AsyncEngine
+) -> List[Tuple[ParagraphMemoryRecord, float]]:
+    """
+    Extract paragraphs from the database using sentences extracted by vector DB
+    """
     async with AsyncSession(engine, expire_on_commit=False) as session:
         def _get_hashes_to_search(sentence_vector_search: List[Document]) -> Set[str]:
+            """
+            Get paragraph hashes to use in `md5 IN ...` condition
+            """
             parapraph_hashes = set()
             for item in sentence_vector_search:
                 parapraph_hashes.add(item.metadata[TEXT_HASH_COLUMN])
             return parapraph_hashes
         
         async def _extract_paragraphs_by_hashes(hashes: Set[str]) -> Dict[str, List[ParagraphMemoryRecord]]:
+            """
+            Extract `ParagraphMemoryRecord` using given hashes
+            """
             hash_to_paragraphs = {}
             async with session.begin():
                 sql_query = select(ParagraphMemoryRecord).filter(
@@ -185,6 +216,9 @@ async def _get_paragraphs(sentence_vector_search_document_scores: List[Tuple[Doc
         def _filter_paragraphs_by_metadata(sentence_vector_search: List[Document],
                                            hash2paragraph: Dict[str, List[ParagraphMemoryRecord]]) \
                                            -> List[List[ParagraphMemoryRecord]]:
+            """
+            In case of md5 collision to additional filtering by common keys metadata's values being the same
+            """
             records_meta_found = []
             for item in sentence_vector_search:
                 item_meta = item.metadata
@@ -204,6 +238,9 @@ async def _get_paragraphs(sentence_vector_search_document_scores: List[Tuple[Doc
         def _filter_paragraphs_by_text(sentence_vector_search: List[Document],
                                     paragraphs: List[List[ParagraphMemoryRecord]]) \
             -> List[ParagraphMemoryRecord]:
+            """
+            Finally filter paragraphs be checking if sentence text is within them
+            """
             result = []
             for item, item_records_meta_found in zip(sentence_vector_search, paragraphs):
                 found = None
@@ -232,10 +269,13 @@ async def _get_paragraphs(sentence_vector_search_document_scores: List[Tuple[Doc
             for item, score in zip(paragraphs_text_cleaned, sentence_vector_scores)
         ]
 
-# %% ../nbs/04_retriever.ipynb 12
+# %% ../nbs/04_retriever.ipynb 14
 def _unique_documents(documents: List[Tuple[ParagraphMemoryRecord, float]],
                       score_processor: Callable[[ParagraphMemoryRecord, float], float]) -> \
     List[Tuple[ParagraphMemoryRecord, float]]:
+    """
+    Given top_sentences_k pairs (paragraph - sentence score) return pairs (unique paragraph - best sentence score)
+    """
     documents_by_id = {
         document.id: document
         for document, _ in documents
@@ -257,14 +297,14 @@ def _unique_documents(documents: List[Tuple[ParagraphMemoryRecord, float]],
         for doc_id in id2max_score.index
     ]
 
-# %% ../nbs/04_retriever.ipynb 14
+# %% ../nbs/04_retriever.ipynb 16
 INPUT_RETRIEVER_QUERY = "query"
 INTERMEDIATE_RETRIEVER_DOCUMENTS = "documents"
 OUTPUT_RETRIEVER_DOCUMENTS = "documents_text"
 
 BLACKLISTED_META_PROPERTIES = {TEXT_HASH_COLUMN}
 
-# %% ../nbs/04_retriever.ipynb 15
+# %% ../nbs/04_retriever.ipynb 17
 def _no_score_processing(document: ParagraphMemoryRecord, score: float) -> float:
     return score
 
@@ -278,6 +318,14 @@ class Memory:
                  score_processing: ScoreProcessing = None,
                  top_k_sentences: int = 50,
                  top_k_paragraphs: int = 5) -> None:
+        """
+        Memory wrapper
+        :param engine: SQLAlchemy engine for SQL part of database
+        :param vector_db: Vector storage for sentences
+        :param lower_score_is_bettter: Different embedder & stores operates different metrics. Like cosine distance - or similarity?
+        :param top_k_sentences: How many sentences retrieved from the DB
+        :param top_k_paragraphs: How many paragraphs retrieved from the DB by found top_k_sentences sentences.
+        """
         self.engine = engine
         self.vector_db = vector_db
         self.lower_score_is_better = lower_score_is_better
@@ -287,11 +335,17 @@ class Memory:
         self.top_k_paragraphs = top_k_paragraphs
 
     def store(self, paragraphs: List[Document]) -> None:
+        """
+        Store given paragraphs in the satabase
+        """
         asyncio.get_event_loop().run_until_complete(
             self.astore(paragraphs)
         )
 
     async def astore(self, paragraphs: List[Document]) -> None:
+        """
+        Store given paragraphs in the satabase. Async version
+        """
         await _store_paragraphs(
             documents_paragraphs=paragraphs,
             sentence_splitter=self.sentence_splitter,
@@ -316,11 +370,21 @@ class Memory:
         return score_processing
     
     def retrieve(self, query: str) -> List[Tuple[ParagraphMemoryRecord, float]]:
+        """
+        Retrive query-relevant paragraphs from the database
+        :param query: Search query
+        :returns: Search result
+        """
         return asyncio.get_event_loop().run_until_complete(
             self.aretrieve(query)
         )
     
     async def aretrieve(self, query: str) -> List[Tuple[ParagraphMemoryRecord, float]]:
+        """
+        Retrive query-relevant paragraphs from the database. Async version.
+        :param query: Search query
+        :returns: Search result
+        """
         score_processing = self._get_score_processing()
         # TODO: Add proper async calls to Milvus
         sentence_similarity_search = await asyncio.to_thread(
@@ -339,6 +403,11 @@ class Memory:
         return documents
     
     def build_retriever_chain(self) -> RunnableSequence:
+        """
+        Build langchain chain from retrieving
+        :returns: LangChain chain consuming `{INPUT_RETRIEVER_QUERY: string_query}` 
+            and returning `{OUTPUT_RETRIEVER_DOCUMENTS: found_paragraphs_text}`
+        """
         def _retrieve_documents(row):
             return {
                 INTERMEDIATE_RETRIEVER_DOCUMENTS: self.retrieve(row[INPUT_RETRIEVER_QUERY])

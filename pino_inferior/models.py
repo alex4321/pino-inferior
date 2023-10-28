@@ -3,20 +3,29 @@
 # %% auto 0
 __all__ = ['aengine', 'Base', 'ParagraphMemoryRecord']
 
-# %% ../nbs/03_models.ipynb 1
+# %% ../nbs/03_models.ipynb 3
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, Text, String, JSON, DateTime, UniqueConstraint, create_engine
 from sqlalchemy.ext.asyncio import create_async_engine
 from .core import SQLALCHEMY_CONNECTION_STRING
 
-# %% ../nbs/03_models.ipynb 2
+# %% ../nbs/03_models.ipynb 4
 aengine = create_async_engine(url=SQLALCHEMY_CONNECTION_STRING)
 
-# %% ../nbs/03_models.ipynb 3
+# %% ../nbs/03_models.ipynb 5
 Base = declarative_base()
 
-# %% ../nbs/03_models.ipynb 4
+# %% ../nbs/03_models.ipynb 6
 class ParagraphMemoryRecord(Base):
+    """
+    Memory system operates on document paragraph level in SQL database and sentences in vector DB.
+    So:
+    1. query is converted to an embedding
+    2. than vector DB finds most similar sentences
+    3. than corresponding paragraph extracted from SQL database
+    And vice versa for storing.
+    This ORM entity related to the last entity (SQL database records regards paragraphs).
+    """
     __tablename__ = "memory_records"
     id = Column(Integer, primary_key=True, autoincrement=True)
     text = Column(Text)

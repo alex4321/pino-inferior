@@ -6,9 +6,9 @@ __all__ = ['AGENT_PROMPTS_DIR', 'TOOLS_PROMPTS_DIR', 'AGENT_INPUT_HISTORY', 'AGE
            'AGENT_INPUT_TIME', 'AGENT_INPUT_STYLE_EXAMPLES', 'AGENT_INPUT_STYLE_DESCRIPTION',
            'AGENT_INTERMEDIATE_HISTORY_STR', 'AGENT_INTERMEDIATE_TOOLS_STR', 'AGENT_INTERMEDIATE_TIME_STR',
            'AGENT_INTERMEDIATE_STYLE_EXAMPLES', 'agent_system_prompt', 'agent_instruction_prompt', 'agent_llm_prompt',
-           'ToolDescription', 'build_stringification_chain', 'LLMOutputParseError', 'run_agent', 'arun_agent']
+           'ToolDescription', 'build_stringification_chain', 'LLMOutputParseError']
 
-# %% ../nbs/07_agent.ipynb 1
+# %% ../nbs/07_agent.ipynb 4
 import os
 from typing import List, Tuple, Union, Dict
 from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTemplate, \
@@ -25,7 +25,8 @@ from dataclasses import dataclass
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import AIMessage
 from langchain.prompts.chat import ChatPromptValue
-from .fallacy import build_fallacy_detection_chain, read_fallacies, FALLACIES_FNAME, \
+from .fallacy import build_fallacy_detection_chain, LengthConfig as FallacyLengthConfig, \
+    read_fallacies, FALLACIES_FNAME, \
     INPUT_QUERY as INPUT_FALLACY_QUERY, OUTPUT_SHORT_ANSWER as OUTPUT_FALLACY_QUERY
 from datetime import datetime
 from langchain.chat_models.base import BaseChatModel
@@ -36,16 +37,16 @@ import tiktoken
 from datetime import datetime
 from dataclasses import dataclass
 
-# %% ../nbs/07_agent.ipynb 2
+# %% ../nbs/07_agent.ipynb 5
 AGENT_PROMPTS_DIR = os.path.join(PROMPTS_DIR, "roleplay_agent")
 TOOLS_PROMPTS_DIR = os.path.join(AGENT_PROMPTS_DIR, "tools")
 
-# %% ../nbs/07_agent.ipynb 3
+# %% ../nbs/07_agent.ipynb 6
 def _read_file(fname: str) -> str:
     with open(fname, "r", encoding="utf-8") as src:
         return src.read()
 
-# %% ../nbs/07_agent.ipynb 5
+# %% ../nbs/07_agent.ipynb 7
 AGENT_INPUT_HISTORY = "history"
 AGENT_INPUT_TOOLS = "tools"
 AGENT_INPUT_CONTEXT = "context"
@@ -62,7 +63,7 @@ AGENT_INTERMEDIATE_TOOLS_STR = "tools_str"
 AGENT_INTERMEDIATE_TIME_STR = "time_str"
 AGENT_INTERMEDIATE_STYLE_EXAMPLES = "style_examples_str"
 
-# %% ../nbs/07_agent.ipynb 7
+# %% ../nbs/07_agent.ipynb 9
 @dataclass
 class ToolDescription:
     name: str
@@ -70,7 +71,7 @@ class ToolDescription:
     input_key: Union[str, None]
     output_key: str
 
-# %% ../nbs/07_agent.ipynb 9
+# %% ../nbs/07_agent.ipynb 11
 agent_system_prompt = SystemMessagePromptTemplate.from_template(_read_file(
     os.path.join(AGENT_PROMPTS_DIR, "system.txt")
 ))
@@ -79,7 +80,7 @@ agent_instruction_prompt = HumanMessagePromptTemplate.from_template(_read_file(
 ))
 agent_llm_prompt = ChatPromptTemplate.from_messages([agent_system_prompt, agent_instruction_prompt])
 
-# %% ../nbs/07_agent.ipynb 10
+# %% ../nbs/07_agent.ipynb 12
 def build_stringification_chain(
         length_function: Callable[[str], int],
         max_messages_length: int,
@@ -168,7 +169,7 @@ def build_stringification_chain(
         ],
     )
 
-# %% ../nbs/07_agent.ipynb 13
+# %% ../nbs/07_agent.ipynb 15
 async def _arun_agent_llm(agent_prompt: ChatPromptTemplate,
                           agent_llm: BaseChatModel,
                           tool_call_stop_sequence: str,
@@ -179,14 +180,14 @@ async def _arun_agent_llm(agent_prompt: ChatPromptTemplate,
     )
     return response.content
 
-# %% ../nbs/07_agent.ipynb 15
+# %% ../nbs/07_agent.ipynb 17
 def _split_by_marker(text: str, open_marker: str, close_marker: str) -> List[str]:
     blocks = text.split(open_marker)
     before_last_open_marker = open_marker.join(blocks[:-1])
     before_last_close_marker = blocks[-1].split(close_marker)[0]
     return before_last_open_marker, before_last_close_marker
 
-# %% ../nbs/07_agent.ipynb 16
+# %% ../nbs/07_agent.ipynb 18
 class _NextAction:
     TOOL = 1
     RESPONSE = 2
@@ -200,14 +201,14 @@ class _ParsedResponse:
     next_action_type: str
     next_action_query: str
 
-# %% ../nbs/07_agent.ipynb 17
+# %% ../nbs/07_agent.ipynb 19
 class LLMOutputParseError(ValueError):
     def __init__(self, output: str):
         super(LLMOutputParseError, self).__init__(
             f"LLM output parsing error: {output}"
         )
 
-# %% ../nbs/07_agent.ipynb 18
+# %% ../nbs/07_agent.ipynb 20
 def _parse_agent_output(response: str, tools: List[ToolDescription], response_marker: str) -> _ParsedResponse:
     for tool in tools:
         tool_open_marker = f"[{tool.name}]"
@@ -236,7 +237,7 @@ def _parse_agent_output(response: str, tools: List[ToolDescription], response_ma
         )
     raise LLMOutputParseError(response)
 
-# %% ../nbs/07_agent.ipynb 19
+# %% ../nbs/07_agent.ipynb 21
 def _extract_tool_representations(tools: List[Tuple[ToolDescription, RunnableSequence]]) -> Tuple[List[ToolDescription], Dict[str, Tuple[ToolDescription, RunnableSequence]]]:
     tool_descriptions = [
         description
@@ -316,7 +317,7 @@ async def _aprocess_agent_iteration_output(
     message = AIMessage(content=f"{response.chain_of_thoughts}{suffix}")
     return message, final_response, continue_further
 
-# %% ../nbs/07_agent.ipynb 21
+# %% ../nbs/07_agent.ipynb 23
 async def _arun_agent_iteration(inputs: dict,
                          agent_prompt: ChatPromptValue,
                          agent_llm: BaseChatModel,
@@ -347,22 +348,22 @@ async def _arun_agent_iteration(inputs: dict,
         response_marker,
     )
 
-# %% ../nbs/07_agent.ipynb 23
-def run_agent(inputs: dict,
-              agent_input_preprocessor: RunnableSequence,
-              agent_llm: BaseChatModel,
-              tool_call_stop_sequence: str,
-              tool_call_close_sequence: str,
-              tools: List[Tuple[ToolDescription, RunnableSequence]],
-              tool_length_function: Callable[[str], int],
-              tool_cut_function: Callable[[str, int], str],
-              tool_query_max_length: int,
-              tool_response_max_length: int,
-              response_marker: str,
-              max_iteration_count: int,
-              max_token_count: int) -> str:
+# %% ../nbs/07_agent.ipynb 25
+def _run_agent(inputs: dict,
+               agent_input_preprocessor: RunnableSequence,
+               agent_llm: BaseChatModel,
+               tool_call_stop_sequence: str,
+               tool_call_close_sequence: str,
+               tools: List[Tuple[ToolDescription, RunnableSequence]],
+               tool_length_function: Callable[[str], int],
+               tool_cut_function: Callable[[str, int], str],
+               tool_query_max_length: int,
+               tool_response_max_length: int,
+               response_marker: str,
+               max_iteration_count: int,
+               max_token_count: int) -> str:
     return asyncio.get_event_loop().run_until_complete(
-        arun_agent(
+        _arun_agent(
             inputs,
             agent_input_preprocessor,
             agent_llm,
@@ -380,19 +381,19 @@ def run_agent(inputs: dict,
     )
 
     
-async def arun_agent(inputs: dict,
-                     agent_input_preprocessor: RunnableSequence,
-                     agent_llm: BaseChatModel,
-                     tool_call_stop_sequence: str,
-                     tool_call_close_sequence: str,
-                     tools: List[Tuple[ToolDescription, RunnableSequence]],
-                     tool_length_function: Callable[[str], int],
-                     tool_cut_function: Callable[[str, int], str],
-                     tool_query_max_length: int,
-                     tool_response_max_length: int,
-                     response_marker: str,
-                     max_iteration_count: int,
-                     max_token_count: int) -> str:
+async def _arun_agent(inputs: dict,
+                      agent_input_preprocessor: RunnableSequence,
+                      agent_llm: BaseChatModel,
+                      tool_call_stop_sequence: str,
+                      tool_call_close_sequence: str,
+                      tools: List[Tuple[ToolDescription, RunnableSequence]],
+                      tool_length_function: Callable[[str], int],
+                      tool_cut_function: Callable[[str, int], str],
+                      tool_query_max_length: int,
+                      tool_response_max_length: int,
+                      response_marker: str,
+                      max_iteration_count: int,
+                      max_token_count: int) -> str:
     chat_inputs: ChatPromptValue = await agent_input_preprocessor.ainvoke(inputs)
     ai_messages = []
     for _ in range(max_iteration_count):

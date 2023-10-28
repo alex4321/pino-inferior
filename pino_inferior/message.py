@@ -3,11 +3,11 @@
 # %% auto 0
 __all__ = ['Message']
 
-# %% ../nbs/01_message.ipynb 3
+# %% ../nbs/01_message.ipynb 4
 from datetime import datetime
 from dataclasses import dataclass
 
-# %% ../nbs/01_message.ipynb 4
+# %% ../nbs/01_message.ipynb 5
 @dataclass
 class Message:
     author: str
