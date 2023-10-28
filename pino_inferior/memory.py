@@ -13,7 +13,7 @@ from langchain.embeddings import OpenAIEmbeddings
 from langchain.text_splitter import MarkdownHeaderTextSplitter, Document
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.schema.embeddings import Embeddings
-from langchain.vectorstores import VectorStore
+from langchain.schema.vectorstore import VectorStore
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
