@@ -152,6 +152,7 @@ d = { 'settings': { 'branch': 'main',
                                                                                              'pino_inferior/models.py'),
                                       'pino_inferior.models.APIContextSummarizationTaskMapping': ( 'models.html#apicontextsummarizationtaskmapping',
                                                                                                    'pino_inferior/models.py'),
+                                      'pino_inferior.models.APILog': ('models.html#apilog', 'pino_inferior/models.py'),
                                       'pino_inferior.models.APITask': ('models.html#apitask', 'pino_inferior/models.py'),
                                       'pino_inferior.models.ParagraphMemoryRecord': ( 'models.html#paragraphmemoryrecord',
                                                                                       'pino_inferior/models.py')}}}

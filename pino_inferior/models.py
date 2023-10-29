@@ -2,7 +2,7 @@
 
 # %% auto 0
 __all__ = ['aengine', 'Base', 'ParagraphMemoryRecord', 'APICommentQuery', 'APIContextSummarizationQuery', 'APITask',
-           'APICommentQueryTaskMapping', 'APIContextSummarizationTaskMapping']
+           'APICommentQueryTaskMapping', 'APIContextSummarizationTaskMapping', 'APILog']
 
 # %% ../nbs/03_models.ipynb 3
 from sqlalchemy.ext.declarative import declarative_base
@@ -114,3 +114,14 @@ class APIContextSummarizationTaskMapping(Base):
             name="unique_tid",
         ),
     )
+
+# %% ../nbs/03_models.ipynb 12
+class APILog(Base):
+    __tablename__ = "log_records"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    task_id = Column(Integer, ForeignKey(f"{APITask.__tablename__}.task_id"))
+    time = Column(DateTime)
+    type = Column(String(64))
+    subtask = Column(String(64))
+    prompt = Column(Text, nullable=True)
+    token = Column(Text, nullable=True)
