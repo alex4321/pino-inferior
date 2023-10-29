@@ -108,5 +108,6 @@ d = { 'settings': { 'branch': 'main',
             'pino_inferior.message': { 'pino_inferior.message.Message': ('message.html#message', 'pino_inferior/message.py'),
                                        'pino_inferior.message.Message.__str__': ( 'message.html#message.__str__',
                                                                                   'pino_inferior/message.py')},
-            'pino_inferior.models': { 'pino_inferior.models.ParagraphMemoryRecord': ( 'models.html#paragraphmemoryrecord',
+            'pino_inferior.models': { 'pino_inferior.models.APICommentQuery': ('models.html#apicommentquery', 'pino_inferior/models.py'),
+                                      'pino_inferior.models.ParagraphMemoryRecord': ( 'models.html#paragraphmemoryrecord',
                                                                                       'pino_inferior/models.py')}}}

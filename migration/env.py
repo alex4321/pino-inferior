@@ -4,7 +4,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
-from pino_inferior.core import SQLALCHEMY_CONNECTION_STRING
+from pino_inferior.core import SQLALCHEMY_SYNC_CONNECTION_STRING
 from pino_inferior.models import *
 from pino_inferior.models import Base
 
@@ -78,7 +78,7 @@ def run_migrations_online() -> None:
 
 
 def fill_alembic_config():
-    config.set_main_option("sqlalchemy.url", SQLALCHEMY_CONNECTION_STRING)
+    config.set_main_option("sqlalchemy.url", SQLALCHEMY_SYNC_CONNECTION_STRING)
 
 
 fill_alembic_config()
