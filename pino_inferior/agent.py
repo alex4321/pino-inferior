@@ -6,7 +6,8 @@ __all__ = ['AGENT_PROMPTS_DIR', 'TOOLS_PROMPTS_DIR', 'AGENT_INPUT_HISTORY', 'AGE
            'AGENT_INPUT_TIME', 'AGENT_INPUT_STYLE_EXAMPLES', 'AGENT_INPUT_STYLE_DESCRIPTION',
            'AGENT_INTERMEDIATE_HISTORY_STR', 'AGENT_INTERMEDIATE_TOOLS_STR', 'AGENT_INTERMEDIATE_TIME_STR',
            'AGENT_INTERMEDIATE_STYLE_EXAMPLES', 'agent_system_prompt', 'agent_instruction_prompt', 'agent_llm_prompt',
-           'ToolDescription', 'build_stringification_chain', 'LLMOutputParseError']
+           'ToolDescription', 'build_stringification_chain', 'LLMOutputParseError', 'LengthConfig',
+           'PromptMarkupConfig', 'RolePlayAgent']
 
 # %% ../nbs/07_agent.ipynb 4
 import os
@@ -425,3 +426,118 @@ async def _arun_agent(inputs: dict,
         assert final_response is not None, "Did not got final response"
         return final_response
     raise ValueError(f"Did not got final LLM response after {max_iteration_count} iterations")
+
+# %% ../nbs/07_agent.ipynb 27
+@dataclass
+class LengthConfig:
+    """
+    Agent texts length configuration.
+    """
+    cut_function: Callable[[str, int], str] # Text cutting
+    length_function: Callable[[str], int] # Text length function
+    max_messages_length: int = 2048 # Maximum token amount in message history
+    max_tools_length: int = 256 # Maximum token amount in tool description
+    max_context_length: int = 512 # Maximum token amount in context description
+    max_username_length: int = 10 # Maximum token amount in username
+    max_character_length: int = 256 # Maximum token amount in character description
+    max_goal_length: int = 256 # Maximum token amount in goals
+    max_style_examples_length: int = 512 # Maximum token amount in style examples
+    max_style_description_length: int = 512 # Maximum token amount in style description
+    max_tool_query_length: int = 32 # Maximum token amount in tool query
+    max_tool_response_length: int = 512 # Maximum token amount in tool response
+    max_session_length: int = 8 * 1024 # Maximum token amount in whole history
+
+
+@dataclass
+class PromptMarkupConfig:
+    """
+    Agent stop sequences and parsing markers
+    """
+    tool_call_stop_sequence: str = "[call]"
+    tool_call_close_sequence: str = "[/call]"
+    response_marker = "response"
+
+
+class RolePlayAgent:
+    """
+    RP agent container
+    """
+    def __init__(self,
+                 tools: List[Tuple[ToolDescription, RunnableSequence]],
+                 lengths: LengthConfig,
+                 prompt_markup: PromptMarkupConfig,
+                 llm: BaseChatModel,
+                 max_iter: int = 5) -> None:
+        """
+        RP agent initialize
+        :param tools: tools for LLM to use
+        :param lenghts: text length configurations
+        :param prompt_markup: stop sequences and parsing markers described in prompt
+        :param llm: LLM itself
+        :param max_iter: maximum iteration of "thinking" regards given message history
+        """
+        self.tools = tools
+        self.lengths = lengths
+        self.prompt_markup = prompt_markup
+        self.llm = llm
+        self.preprocessing_chain = self._build_preprocessing_chain()
+        self.max_iter = max_iter
+
+    def _build_preprocessing_chain(self) -> RunnableSequence:
+        agent_stringify_transform = build_stringification_chain(
+            length_function=self.lengths.length_function,
+            max_messages_length=self.lengths.max_messages_length,
+            max_tools_length=self.lengths.max_tools_length,
+            max_context_length=self.lengths.max_context_length,
+            max_username_length=self.lengths.max_username_length,
+            max_character_length=self.lengths.max_character_length,
+            max_goal_length=self.lengths.max_goal_length,
+            max_style_examples_length=self.lengths.max_style_examples_length,
+            max_style_description_length=self.lengths.max_style_description_length,
+        )
+        agent_preprocessing_chain = agent_stringify_transform | agent_llm_prompt
+        return agent_preprocessing_chain
+    
+    async def arun(self, inputs: dict) -> str:
+        """
+        Run agent
+        :param inputs: inputs
+        :returns: agent response
+        """
+        return await _arun_agent(
+            inputs=inputs,
+            agent_input_preprocessor=self.preprocessing_chain,
+            agent_llm=self.llm,
+            tool_call_stop_sequence=self.prompt_markup.tool_call_stop_sequence,
+            tool_call_close_sequence=self.prompt_markup.tool_call_close_sequence,
+            tools=self.tools,
+            tool_length_function=self.lengths.length_function,
+            tool_cut_function=self.lengths.cut_function,
+            tool_query_max_length=self.lengths.max_tool_query_length,
+            tool_response_max_length=self.lengths.max_tool_response_length,
+            response_marker=self.prompt_markup.response_marker,
+            max_iteration_count=self.max_iter,
+            max_token_count=self.lengths.max_session_length,
+        )
+    
+    def run(self, inputs: dict) -> str:
+        """
+        Run agent. Async version
+        :param inputs: inputs
+        :returns: agent response
+        """
+        return _run_agent(
+            inputs=inputs,
+            agent_input_preprocessor=self.preprocessing_chain,
+            agent_llm=self.llm,
+            tool_call_stop_sequence=self.prompt_markup.tool_call_stop_sequence,
+            tool_call_close_sequence=self.prompt_markup.tool_call_close_sequence,
+            tools=self.tools,
+            tool_length_function=self.lengths.length_function,
+            tool_cut_function=self.lengths.cut_function,
+            tool_query_max_length=self.lengths.max_tool_query_length,
+            tool_response_max_length=self.lengths.max_tool_response_length,
+            response_marker=self.prompt_markup.response_marker,
+            max_iteration_count=self.max_iter,
+            max_token_count=self.lengths.max_session_length,
+        )

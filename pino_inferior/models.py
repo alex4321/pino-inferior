@@ -9,6 +9,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, Text, String, JSON, DateTime, ForeignKey, UniqueConstraint, PrimaryKeyConstraint, \
     create_engine
 from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.orm import relationship
 from .core import SQLALCHEMY_CONNECTION_STRING
 
 # %% ../nbs/03_models.ipynb 4
@@ -63,6 +64,7 @@ class APIContextSummarizationQuery(Base):
     query_id = Column(Integer, primary_key=True, autoincrement=True)
     text = Column(Text)
     time = Column(DateTime)
+    post_time = Column(DateTime)
 
     user_name = Column(Text)
     user_character = Column(Text)
@@ -72,6 +74,8 @@ class APIContextSummarizationQuery(Base):
 class APITask(Base):
     __tablename__ = "api_task"
     task_id = Column(Integer, primary_key=True, autoincrement=True)
+    created_at = Column(DateTime)
+    updated_at = Column(DateTime)
     status = Column(Integer)
     response = Column(Text)
 
@@ -87,6 +91,10 @@ class APICommentQueryTaskMapping(Base):
             "task_id",
             name="pk_cid_tid"
         ),
+        UniqueConstraint(
+            "task_id",
+            name="unique_tid",
+        ),
     )
 
 # %% ../nbs/03_models.ipynb 11
@@ -100,5 +108,9 @@ class APIContextSummarizationTaskMapping(Base):
             "context_id",
             "task_id",
             name="pk_cid_tid"
+        ),
+        UniqueConstraint(
+            "task_id",
+            name="unique_tid",
         ),
     )

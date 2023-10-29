@@ -6,6 +6,8 @@ __all__ = ['Message']
 # %% ../nbs/01_message.ipynb 4
 from datetime import datetime
 from dataclasses import dataclass
+from time import mktime, struct_time
+import pandas as pd
 
 # %% ../nbs/01_message.ipynb 5
 @dataclass
@@ -14,6 +16,24 @@ class Message:
     time: datetime
     content: str
 
+    @property
+    def time_string(self) -> str:
+        return self.time.strftime("%d %b %Y %H:%M")
+
     def __str__(self) -> str:
-        time = self.time.strftime("%d %b %Y %H:%M")
-        return f"@{self.author.strip()} ({time}):\n{self.content.strip()}"
+        return f"@{self.author.strip()} ({self.time_string}):\n{self.content.strip()}"
+    
+    def to_dict(self) -> dict:
+        return {
+            "author": self.author,
+            "time": self.time_string,
+            "content": self.content,
+        }
+    
+    @staticmethod
+    def from_dict(data: dict) -> dict:
+        return Message(
+            data["author"],
+            pd.to_datetime(data["time"]),
+            data["content"],
+        )
