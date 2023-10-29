@@ -5,14 +5,14 @@ __all__ = ['TASK_STATUS_NOT_STARTED', 'TASK_STATUS_IN_PROGRESS', 'TASK_STATUS_FI
            'INTERMEDIATE_TASK_ID', 'User', 'UserWithStyle', 'MessageQuery', 'TaskResponse', 'CommentRequest',
            'api_comment_query', 'Post', 'ContextRequest', 'api_context_query', 'api_task_status',
            'ContextRequestWithTime', 'CommentRequestWithTime', 'TaskForExecution', 'api_tasks_for_execution',
-           'task_status_set']
+           'task_status_set', 'LogRecord', 'task_get_log', 'task_post_log']
 
 # %% ../nbs/09_api_methods.ipynb 1
 from datetime import datetime
 from typing import List, Union, Dict
 from .message import Message
 from .models import aengine, APICommentQuery, APICommentQueryTaskMapping, APITask, \
-    APIContextSummarizationQuery, APIContextSummarizationTaskMapping
+    APIContextSummarizationQuery, APIContextSummarizationTaskMapping, APILog
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy import select
 import pandas as pd
@@ -255,7 +255,6 @@ async def api_tasks_for_execution(count: int) -> List[TaskForExecution]:
             tasks_to_mark = tasks_to_mark_response.scalars().all()
             for task in tasks_to_mark:
                 task.status = TASK_STATUS_IN_PROGRESS
-            
             task_ids = {
                 task.task_id
                 for task in tasks_to_mark
@@ -336,12 +335,57 @@ async def task_status_set(request: List[TaskResponse]) -> None:
                 task.status = task_id2task[task.task_id].status
 
 # %% ../nbs/09_api_methods.ipynb 21
-def _parse_task(data: dict) -> TaskForExecution:
-    return TypeAdapter(TaskForExecution).validate_python(data)
+@dataclass
+class LogRecord:
+    task_id: int
+    time: str
+    type: str
+    subtask: str
+    prompt: Union[str, None]
+    token: Union[str, None]
 
 
-def _parse_tasks(data: List[dict]) -> List[TaskForExecution]:
-    return TypeAdapter(List[TaskForExecution]).validate_python(data)
+@app.get("/task-log")
+async def task_get_log(task_id: int, older_than: str) -> List[LogRecord]:
+    if older_than:
+        older_than_dt = pd.to_datetime(older_than)
+    else:
+        older_than_dt = None
+    result = []
+    async with AsyncSession(aengine) as session:
+        async with session.begin():
+            query =  select(APILog)\
+                .filter(APILog.task_id==task_id)
+            if older_than_dt:
+                query = query.filter(APILog.time > older_than_dt)
+            query = query.order_by(APILog.time.desc())
+            query_response = await session.execute(query)
+            log_record: APILog
+            for log_record, in query_response.all():
+                result.append(LogRecord(
+                    task_id=log_record.task_id,
+                    time=str(log_record.time),
+                    type=log_record.type,
+                    subtask=log_record.subtask,
+                    prompt=log_record.prompt,
+                    token=log_record.token,
+                ))
+    return result
 
-# %% ../nbs/09_api_methods.ipynb 22
+
+@app.post("/task-log-add")
+async def task_post_log(record: LogRecord) -> None:
+    async with AsyncSession(aengine) as session:
+        async with session.begin():
+            log = APILog(
+                task_id=record.task_id,
+                time=pd.to_datetime(record.time),
+                type=record.type,
+                subtask=record.subtask,
+                prompt=record.prompt,
+                token=record.token
+            )
+            session.add(log)
+
+# %% ../nbs/09_api_methods.ipynb 24
 INTERMEDIATE_TASK_ID = "task_id"
