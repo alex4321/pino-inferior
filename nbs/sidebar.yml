@@ -8,7 +8,6 @@ website:
       - 03_models.ipynb
       - 04_retriever.ipynb
       - 05_download_dataset.ipynb
-      - 06_memory_explore.ipynb
-      - 07_agent.ipynb
-      - 08_context_extractor.ipynb
-      - 09_api_methods.ipynb
+      - 06_agent.ipynb
+      - 07_context_extractor.ipynb
+      - 08_api_methods.ipynb

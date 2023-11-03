@@ -7,8 +7,14 @@ agent for political discussion.
 
 ## Install
 
-TODO: installation instruction here
+Using conda installation should be quite simple:
+
+``` bash
+conda create --name pino-inferior python=3.11
+conda activate pino-inferior
+python setup.py install
+```
 
 ## How to use
 
-Fill me in please! Don’t forget code examples:
+No examples yet.

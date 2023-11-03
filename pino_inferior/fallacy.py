@@ -106,6 +106,7 @@ instruction_prompt = HumanMessagePromptTemplate.from_template_file(
                      INPUT_QUERY]
 )
 chat_prompt = ChatPromptTemplate.from_messages([system_prompt, instruction_prompt])
+chat_prompt
 
 # %% ../nbs/02_fallacies.ipynb 15
 def _stringify(row: dict,
