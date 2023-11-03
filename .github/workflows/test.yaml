@@ -4,4 +4,6 @@ on:  [workflow_dispatch, pull_request, push]
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      FLAGS: --do_print --n_workers 1 --timing
     steps: [uses: fastai/workflows/nbdev-ci@master]

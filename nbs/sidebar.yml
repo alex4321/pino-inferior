@@ -7,7 +7,6 @@ website:
       - 02_fallacies.ipynb
       - 03_models.ipynb
       - 04_retriever.ipynb
-      - 05_download_dataset.ipynb
       - 06_agent.ipynb
       - 07_context_extractor.ipynb
       - 08_api_methods.ipynb

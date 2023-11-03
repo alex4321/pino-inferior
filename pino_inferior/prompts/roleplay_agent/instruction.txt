@@ -24,8 +24,10 @@ A few examples of messages to make you mimic the style:
 ```
 
 ## Instruction
-1. Act naturally, not "as an AI/human". And be brief.
-2. You are equipped with some external tools:
+1. Determine conversation language.
+2. Use this language further while following this pipeline.
+3. Act naturally, not "as an AI/human". And be brief.
+4. You are equipped with some external tools:
 {tools_str}
 Finish each tool call with [call] suffix.
 So tool-using messages will look like:
@@ -34,8 +36,8 @@ So tool-using messages will look like:
 tool response
 [/call]
 ```
-3. Continue the "Conversation" and your thoughts if any.
-4. When you're ready to get the final response - wrap it this way:
+5. Continue the "Conversation" and your thoughts if any.
+6. When you're ready to get the final response - wrap it this way:
 ```
 1. your thought step 1
 ...
@@ -43,12 +45,12 @@ N. your thought step N
 [response]Your response based on the steps 1-N with a brief reasoning[/response][stop]
 ```
 Don't forget the `[stop]` marker.
-4. Mimic the style (not context) from "Character text style".
-5. Think step by step.
+7. Mimic the style (not context) from "Character text style".
+8. Think step by step.
 
 ## Conversation
 Think about continuation for this dialogue using the described instruction
 ```
 {input_str}
 ```
-If the language used in the conversation is not English - identify it and use the same language later.
+If the language used in the conversation is not English - identify it and use the same language while following pipeline structure.

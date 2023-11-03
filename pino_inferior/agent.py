@@ -192,7 +192,8 @@ def _split_by_marker(text: str, open_marker: str, close_marker: str) -> List[str
 class _NextAction:
     TOOL = 1
     RESPONSE = 2
-    UNKNOWN = 3
+    CONTINUE = 3
+    UNKNOWN = 4
 
 
 @dataclass
@@ -236,7 +237,13 @@ def _parse_agent_output(response: str, tools: List[ToolDescription], response_ma
             next_action_type="",
             next_action_query=response,
         )
-    raise LLMOutputParseError(response)
+    else:
+        return _ParsedResponse(
+            chain_of_thoughts=response,
+            next_action=_NextAction.CONTINUE,
+            next_action_type="",
+            next_action_query="",
+        )
 
 # %% ../nbs/06_agent.ipynb 21
 def _extract_tool_representations(tools: List[Tuple[ToolDescription, RunnableSequence]]) -> Tuple[List[ToolDescription], Dict[str, Tuple[ToolDescription, RunnableSequence]]]:
@@ -315,6 +322,10 @@ async def _aprocess_agent_iteration_output(
         suffix = f"[{response_marker}]{response.next_action_query}[/{response_marker}]"
         final_response = response.next_action_query
         continue_further = False
+    elif response.next_action == _NextAction.CONTINUE:
+        suffix = ""
+        final_response = ""
+        continue_further = True
     message = AIMessage(content=f"{response.chain_of_thoughts}{suffix}")
     return message, final_response, continue_further
 
