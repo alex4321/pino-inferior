@@ -303,7 +303,7 @@ async def _aprocess_agent_iteration_output(
 ) -> Tuple[AIMessage, Union[str, None], bool]:
     tool_descriptions, tools_by_name = _extract_tool_representations(tools)
     response = _parse_agent_output(llm_output, tool_descriptions, response_marker)
-    assert response.next_action in {_NextAction.TOOL, _NextAction.RESPONSE}
+    assert response.next_action in {_NextAction.TOOL, _NextAction.RESPONSE, _NextAction.CONTINUE}
     if response.next_action == _NextAction.TOOL:
         tool_inputs, tool_chain, tool_output_key, tool_name = _process_tool(inputs, response, tools_by_name)
         tool_output = (await tool_chain.ainvoke(tool_inputs))[tool_output_key]
