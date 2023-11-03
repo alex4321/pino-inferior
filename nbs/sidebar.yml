@@ -10,3 +10,5 @@ website:
       - 05_download_dataset.ipynb
       - 06_memory_explore.ipynb
       - 07_agent.ipynb
+      - 08_context_extractor.ipynb
+      - 09_api_methods.ipynb
