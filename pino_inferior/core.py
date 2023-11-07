@@ -24,12 +24,12 @@ from dotenv import load_dotenv
 # %% ../nbs/00_core.ipynb 5
 try:
     __file__
-    _IS_JUPYTER = False
+    IS_JUPYTER = False
 except NameError:
-    _IS_JUPYTER = True
+    IS_JUPYTER = True
 
 # %% ../nbs/00_core.ipynb 6
-if _IS_JUPYTER:
+if IS_JUPYTER:
     PACKAGE_DIR = os.path.join(os.getcwd(), "..", "pino_inferior")
 else:
     PACKAGE_DIR = os.path.dirname(__file__)

@@ -65,7 +65,14 @@ from pydantic.tools import parse_obj_as
 import json
 from pydantic.json import pydantic_encoder
 
-# %% ../nbs/09_server.ipynb 4
+# %% ../nbs/09_server.ipynb 3
+try:
+    __file__
+    IS_JUPYTER = False
+except NameError:
+    IS_JUPYTER = True
+
+# %% ../nbs/09_server.ipynb 5
 def _initialize_openai_chat_model(name: str, callbacks: List[AsyncFunctionalStyleChatCompletionHandler]) -> Tuple[ChatOpenAI, BaseChatModel]:
     gpt = ChatOpenAI(
         model_name=name,
@@ -77,7 +84,7 @@ def _initialize_openai_chat_model(name: str, callbacks: List[AsyncFunctionalStyl
                                          callbacks=callbacks,)
     return gpt, choose_key_gpt
 
-# %% ../nbs/09_server.ipynb 5
+# %% ../nbs/09_server.ipynb 6
 def _initialize_openai_embedder_model(name: str) -> Tuple[OpenAIEmbeddings, Embeddings]:
     embedder = OpenAIEmbeddings(
         model=name,
@@ -87,11 +94,11 @@ def _initialize_openai_embedder_model(name: str) -> Tuple[OpenAIEmbeddings, Embe
                                                     openai_embeddings=limited_embedder)
     return embedder, choose_key_embedder
 
-# %% ../nbs/09_server.ipynb 6
+# %% ../nbs/09_server.ipynb 7
 def _parse_json_as(cls, json_text):
     return parse_obj_as(cls, json.loads(json_text))
 
-# %% ../nbs/09_server.ipynb 8
+# %% ../nbs/09_server.ipynb 9
 @dataclass
 class UserDescription:
     name: str
@@ -104,7 +111,7 @@ class UserDescriptionWithStyle(UserDescription):
     style_examples: List[str]
     style_description: str
 
-# %% ../nbs/09_server.ipynb 9
+# %% ../nbs/09_server.ipynb 10
 RequestId = int
 
 
@@ -112,7 +119,7 @@ RequestId = int
 class Request:
     id: RequestId
 
-# %% ../nbs/09_server.ipynb 10
+# %% ../nbs/09_server.ipynb 11
 CallbackSystem = str
 CallbackType = str
 CallbackTime = datetime
@@ -120,12 +127,12 @@ CallbackResponse = str
 
 AsyncCallback = Callable[[RequestId, CallbackSystem, CallbackType, CallbackTime, CallbackResponse], Awaitable[None]]
 
-# %% ../nbs/09_server.ipynb 13
+# %% ../nbs/09_server.ipynb 14
 FALLACY_TOOL_DESCRIPTION = read_file(os.path.join(TOOLS_PROMPTS_DIR, "fallacy.txt"))
 MEMORY_TOOL_DESCRIPTION = read_file(os.path.join(TOOLS_PROMPTS_DIR, "memory.txt"))
 FALLACIES = read_fallacies(FALLACIES_FNAME)
 
-# %% ../nbs/09_server.ipynb 14
+# %% ../nbs/09_server.ipynb 15
 @dataclass
 class Message:
     author: str
@@ -139,7 +146,7 @@ class CommentRequest(Request):
     history: List[Message]
     user: UserDescriptionWithStyle
 
-# %% ../nbs/09_server.ipynb 15
+# %% ../nbs/09_server.ipynb 16
 def _initialize_fallacy_tool(llm: ChatOpenAI) -> Tuple[ToolDescription, RunnableSequence]:
     encoding = tiktoken.encoding_for_model(llm.model_name)
     length_config = FallacyLengthConfig(
@@ -156,7 +163,7 @@ def _initialize_fallacy_tool(llm: ChatOpenAI) -> Tuple[ToolDescription, Runnable
     chain = build_fallacy_detection_chain(llm, length_config)
     return description, chain
 
-# %% ../nbs/09_server.ipynb 16
+# %% ../nbs/09_server.ipynb 17
 def _initialize_memory_tool(embedder: OpenAIEmbeddings) \
     -> Tuple[ToolDescription, RunnableSequence]:
     vector_store = VECTOR_DB(embedding_function=embedder, **VECTOR_DB_PARAMS)
@@ -174,7 +181,7 @@ def _initialize_memory_tool(embedder: OpenAIEmbeddings) \
     chain = container.build_retriever_chain()
     return description, chain
 
-# %% ../nbs/09_server.ipynb 17
+# %% ../nbs/09_server.ipynb 18
 def _initialize_agent(fallacy_callbacks: List[AsyncFunctionalStyleChatCompletionHandler],
                       agent_callbacks: List[AsyncFunctionalStyleChatCompletionHandler]) \
                          -> Tuple[ChatOpenAI, ChatOpenAI, OpenAIEmbeddings, RolePlayAgent]:
@@ -202,7 +209,7 @@ def _initialize_agent(fallacy_callbacks: List[AsyncFunctionalStyleChatCompletion
     
     return fallacy_gpt, agent_gpt, embeddings_openai, agent
 
-# %% ../nbs/09_server.ipynb 18
+# %% ../nbs/09_server.ipynb 19
 async def process_comment_request(request: CommentRequest, callback: AsyncCallback) -> None:
     async def _inner_callback(system: str, envent_type: str, time: datetime, content: str) -> None:
         await callback(request.id, system, envent_type, time, content)
@@ -240,18 +247,18 @@ async def process_comment_request(request: CommentRequest, callback: AsyncCallba
         await _inner_callback("system", "ERROR", datetime.now(), traceback.format_exception(err))
         raise err
 
-# %% ../nbs/09_server.ipynb 19
+# %% ../nbs/09_server.ipynb 20
 async def aprint(*args, **kwargs):
     print(*args, **kwargs)
 
-# %% ../nbs/09_server.ipynb 22
+# %% ../nbs/09_server.ipynb 23
 @dataclass
 class ContextRequest(Request):
     text: str
     time: str
     user: UserDescription
 
-# %% ../nbs/09_server.ipynb 23
+# %% ../nbs/09_server.ipynb 24
 def _initialize_context_extractor(callbacks: List[AsyncFunctionalStyleChatCompletionHandler]) -> RunnableSequence:
     _, llm = _initialize_openai_chat_model(OPENAI_CONTEXT_MODEL, callbacks)
     encoding = tiktoken.encoding_for_model(llm.model_name)
@@ -267,7 +274,7 @@ def _initialize_context_extractor(callbacks: List[AsyncFunctionalStyleChatComple
     )
     return context_extractor
 
-# %% ../nbs/09_server.ipynb 24
+# %% ../nbs/09_server.ipynb 25
 async def process_context_extraction_request(request: ContextRequest, callback: AsyncCallback) -> None:
     async def _inner_callback(system: str, envent_type: str, time: datetime, content: str) -> None:
         await callback(request.id, system, envent_type, time, content)
@@ -294,11 +301,11 @@ async def process_context_extraction_request(request: ContextRequest, callback: 
         await _inner_callback("system", "ERROR", datetime.now(), traceback.format_exception(err))
         raise err
 
-# %% ../nbs/09_server.ipynb 29
+# %% ../nbs/09_server.ipynb 30
 ApiMethodImplementation = Callable[[Request, AsyncCallback], Awaitable[None]]
 ApiMethods = Dict[str, Tuple[ApiMethodImplementation, type]]
 
-# %% ../nbs/09_server.ipynb 30
+# %% ../nbs/09_server.ipynb 31
 def _parse_message(methods: ApiMethods, message: str) -> Tuple[ApiMethodImplementation, Request]:
     method, params = message.split(" ", maxsplit=1)
     assert method in methods
@@ -306,25 +313,7 @@ def _parse_message(methods: ApiMethods, message: str) -> Tuple[ApiMethodImplemen
     request = _parse_json_as(request_class, params)
     return method_implementation, request    
 
-# %% ../nbs/09_server.ipynb 31
-_parse_message(
-    {
-        "comment": (process_comment_request, CommentRequest),
-        "context": (process_context_extraction_request, ContextRequest),
-    },
-    "context " + json.dumps(ContextRequest(
-        id=2,
-        text=TEXT,
-        time="2023-08-01 11:00:12",
-        user=UserDescription(
-            name="alex4321",
-            character="you are a programmer, 29 y.o. male",
-            goals="Convince as much people as possible that the ongoing war between Russia and Ukraine is only bringing more problem, that it do not solve any issues, and moreover - break the impression that it is widely supported. To do so - express your opinion, and debunk opponents opinions. And that Russia should quit it.",
-        )
-    ), default=pydantic_encoder)
-)
-
-# %% ../nbs/09_server.ipynb 32
+# %% ../nbs/09_server.ipynb 33
 async def server() -> None:
     methods = {
         "comment": (process_comment_request, CommentRequest),
@@ -348,16 +337,17 @@ async def server() -> None:
         message: str
         # TODO: parallel
         async for message in websocket:
-            print(message)
+            handler, request = None, None
             try:
                 handler, request = _parse_message(methods, message)
             except Exception as err:
                 _send(-1, "system", "ERROR", datetime.now(), f"Can't parse request: {traceback.format_exception(err)}")
-            await handler(request, _send)
+            if handler is not None and request is not None:
+                asyncio.create_task(handler(request, _send))
     
     async with serve(process, SERVER_HOST, SERVER_PORT):
         await asyncio.Future()  # run forever
 
-# %% ../nbs/09_server.ipynb 33
-if __name__ == "__main__":
-    server()
+# %% ../nbs/09_server.ipynb 34
+if (__name__ == "__main__") and (not IS_JUPYTER):
+    asyncio.run(server())
