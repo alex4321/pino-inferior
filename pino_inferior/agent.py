@@ -171,15 +171,16 @@ def build_stringification_chain(
     )
 
 # %% ../nbs/06_agent.ipynb 15
-async def _arun_agent_llm(agent_prompt: ChatPromptTemplate,
+async def _arun_agent_llm(agent_prompt: ChatPromptValue,
                           agent_llm: BaseChatModel,
                           tool_call_stop_sequence: str,
                           response_stop_sequence: str) -> str:
-    response = await agent_llm.ainvoke(
-        agent_prompt,
+    response = await agent_llm.agenerate(
+        [agent_prompt.messages],
         stop=[tool_call_stop_sequence, response_stop_sequence]
     )
-    return response.content
+    generation = response.generations[0][0]
+    return generation.text
 
 # %% ../nbs/06_agent.ipynb 17
 def _split_by_marker(text: str, open_marker: str, close_marker: str) -> List[str]:

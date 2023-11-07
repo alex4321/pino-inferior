@@ -3,7 +3,10 @@
 # %% auto 0
 __all__ = ['PACKAGE_DIR', 'DATA_DIR', 'PROMPTS_DIR', 'OPENAI_AGENT_MODEL', 'OPENAI_FALLACY_MODEL', 'OPENAI_CONTEXT_MODEL',
            'SQLALCHEMY_CONNECTION_STRING', 'SQLALCHEMY_SYNC_CONNECTION_STRING', 'OPENAI_API_KEY', 'VECTOR_DB_NAME',
-           'VECTOR_DB', 'VECTOR_DB_PARAMS', 'MEMORY_PARAMS']
+           'VECTOR_DB', 'VECTOR_DB_PARAMS', 'MEMORY_PARAMS', 'OPENAI_MEMORY_EMBEDDER_MODEL', 'SERVER_OPENAI_API_KEYS',
+           'SERVER_MAX_FALLACIES_LENGTH', 'SERVER_MAX_THREAD_LENGTH', 'SERVER_MAX_CONTEXT_LENGTH',
+           'SERVER_AGENT_MAX_ITERATIONS', 'SERVER_MAX_CONTEXT_EXTRACTOR_POST_LENGTH', 'SERVER_HOST', 'SERVER_PORT',
+           'read_file']
 
 # %% ../nbs/00_core.ipynb 2
 import langchain.vectorstores
@@ -71,3 +74,21 @@ VECTOR_DB_PARAMS = json.loads(os.environ["VECTOR_DB_PARAMS"])
 
 # %% ../nbs/00_core.ipynb 13
 MEMORY_PARAMS = json.loads(os.environ["MEMORY_PARAMS"])
+
+# %% ../nbs/00_core.ipynb 14
+OPENAI_MEMORY_EMBEDDER_MODEL = os.environ["OPENAI_MEMORY_EMBEDDER_MODEL"]
+
+# %% ../nbs/00_core.ipynb 15
+SERVER_OPENAI_API_KEYS = os.environ["SERVER_OPENAI_API_KEYS"].split(";")
+SERVER_MAX_FALLACIES_LENGTH = int(os.environ["SERVER_MAX_FALLACIES_LENGTH"])
+SERVER_MAX_THREAD_LENGTH = int(os.environ["SERVER_MAX_THREAD_LENGTH"])
+SERVER_MAX_CONTEXT_LENGTH = int(os.environ["SERVER_MAX_CONTEXT_LENGTH"])
+SERVER_AGENT_MAX_ITERATIONS = int(os.environ["SERVER_AGENT_MAX_ITERATIONS"])
+SERVER_MAX_CONTEXT_EXTRACTOR_POST_LENGTH = int(os.environ["SERVER_MAX_CONTEXT_EXTRACTOR_POST_LENGTH"])
+SERVER_HOST = os.environ["SERVER_HOST"]
+SERVER_PORT = int(os.environ["SERVER_PORT"])
+
+# %% ../nbs/00_core.ipynb 16
+def read_file(fname: str) -> str:
+    with open(fname, "r", encoding="utf-8") as src:
+        return src.read()
