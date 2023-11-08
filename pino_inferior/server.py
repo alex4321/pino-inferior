@@ -341,7 +341,7 @@ async def server() -> None:
             try:
                 handler, request = _parse_message(methods, message)
             except Exception as err:
-                _send(-1, "system", "ERROR", datetime.now(), f"Can't parse request: {traceback.format_exception(err)}")
+                await _send(-1, "system", "ERROR", datetime.now(), f"Can't parse request: {traceback.format_exception(err)}")
             if handler is not None and request is not None:
                 asyncio.create_task(handler(request, _send))
     

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="./client.js"></script>
+        <title>Test client</title>
+    </head>
+    <body>
+        <div id="commentContainer"></div>
+        <script>
+            function addBlockInto(container, system, type, time, content) {
+                let block = document.createElement("div");
+                block.className = "record";
+
+                let systemSpan = document.createElement("span");
+                systemSpan.className = "system";
+                systemSpan.innerText = system;
+                block.appendChild(systemSpan);
+                let typeSpan = document.createElement("span");
+                typeSpan.className = "type";
+                typeSpan.innerText = type;
+                block.appendChild(typeSpan);
+                let timeSpan = document.createElement("span");
+                timeSpan.className = "time";
+                timeSpan.innerText = time;
+                block.appendChild(timeSpan);
+                let contentSpan = document.createElement("span");
+                contentSpan.className = "content";
+                contentSpan.innerText = content;
+                block.appendChild(contentSpan);
+                container.appendChild(block);
+                return block;
+            }
+            let client = new PIClientInsides("ws://localhost:8766");
+            let commentRequest = new PICommentRequestParams(
+                1,
+                "Пост о войне России и Украины",
+                [
+                    new PIMessage("Moonlight", "2023-10-01 11:29:00", "Мы скоро закончим с Украиной"),
+                    new PIMessage("alex4321", "2023-10-01 11:30:00", "А что, случился какой-то прогресс после 6 месяцев взятия Бахмута?\n\n" + 
+                        "Ну, чтобы подозревать что это произойдёт вскоре, " + 
+                        "а не затянется на годы независимо от исхода."),
+                    new PIMessage("Moonlight", "2023-10-01 11:31:00",
+                        "Время - ресурс, у нас его дохуя."),
+                ],
+                new PIUserDescriptionWithStyle(
+                    "alex4321",
+                    "you are a programmer, 29 y.o. male",
+                    "Convince as much people as possible that the ongoing war between Russia and Ukraine " + 
+                        "is only bringing more problem, that it do not solve any issues, and moreover - break " + 
+                        "the impression that it is widely supported. To do so - express your opinion, " + 
+                        "and debunk opponents opinions. And that Russia should quit it.",
+                    [
+                        "В вакууме, да :Yoba:. Оба же тут существовали всё время или имели таки достигнутое соглашение, чтобы было от чего отталкиваться как опорной точки :Yoba:",
+                        "Не особо-то может. Не привлекая население в виде не 1% принудительного мармелада и пары процентов добровольного, а в виде процентов 10.\nА то, чтобы привлечь большое количество - неплохо бы, чтобы они понимали, нахуя это им надо. А то так численность военкомов может начать неприемлемо быстро падать, а следом их желание работать.\nА с этим у пропаганды проблема. Вот с чем у них нет проблем, так это с стимуляцией пассивности, но это обратно нужному (для названной вами задачи).\nДа и опять же - ну вот убедишь ты в идее не какого-нибудь Стрелкова и клуб рассерженных долбоёбов, а большое число людей. Что делать, когда (не если, а когда) идея станет неактуальной? Показательной посадкой пары человек дело не закончится же.\n",
+                        "Точнее не так - смену она не устраивала.\nОна просто выстрелила себе в ногу так, что потом что-то новое приходилось строить не апгрейдом предыдущей системы, а из кусков её трупа.",
+                    ],
+                    "- Non-formal style, using mainly Russian language " + 
+                        "(my English is a bit screwed up)" + 
+                        "\n- Brief. Most time.\n" + 
+                        "- Overuse memes sometimes."
+                )
+            );
+            var lastGenerationBlock = null;
+            client.onConnectionOpen = function() {
+                let commentQueryId = client.sendQuery(
+                    "comment",
+                    commentRequest,
+                    function(commentEvent) {
+                        console.log(commentEvent);
+                        let commentContainer = document.querySelector("#commentContainer");
+                        if (commentEvent.callbackType == "LLM_START") {
+                            addBlockInto(
+                                commentContainer,
+                                commentEvent.callbackSystem,
+                                commentEvent.callbackType,
+                                commentEvent.time,
+                                commentEvent.response,
+                            )
+                            lastGenerationBlock = addBlockInto(
+                                commentContainer,
+                                commentEvent.callbackSystem,
+                                "GENERATED",
+                                commentEvent.time,
+                                commentEvent.response,
+                            )
+                        } else if (commentEvent.callbackType == "TOKEN") {
+                            let contentSpan = document.createElement("span");
+                            contentSpan.className = "content";
+                            contentSpan.innerText = commentEvent.response;
+                            lastGenerationBlock.appendChild(contentSpan);
+                        } else {
+                            addBlockInto(
+                                commentContainer,
+                                commentEvent.callbackSystem,
+                                commentEvent.callbackType,
+                                commentEvent.time,
+                                commentEvent.response,
+                            )
+                        }
+                        commentContainer.scrollTo({
+                            top: commentContainer.scrollHeight,
+                            behavior: 'smooth'
+                        });
+                    }
+                )
+            }
+        </script>
+    </body>
+</html>
