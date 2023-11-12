@@ -2,9 +2,10 @@
 
 # %% auto 0
 __all__ = ['RequestId', 'CallbackSystem', 'CallbackType', 'CallbackTime', 'CallbackResponse', 'AsyncCallback',
-           'FALLACY_TOOL_DESCRIPTION', 'MEMORY_TOOL_DESCRIPTION', 'FALLACIES', 'ApiMethodImplementation', 'ApiMethods',
-           'UserDescription', 'UserDescriptionWithStyle', 'Request', 'Message', 'CommentRequest',
-           'process_comment_request', 'aprint', 'ContextRequest', 'process_context_extraction_request', 'server']
+           'FALLACY_TOOL_DESCRIPTION', 'MEMORY_TOOL_DESCRIPTION', 'FALLACIES', 'embeddings_openai', 'embeddings',
+           'memory_tool', 'ApiMethodImplementation', 'ApiMethods', 'UserDescription', 'UserDescriptionWithStyle',
+           'Request', 'Message', 'CommentRequest', 'process_comment_request', 'aprint', 'ContextRequest',
+           'process_context_extraction_request', 'server']
 
 # %% ../nbs/09_server.ipynb 2
 import os
@@ -182,16 +183,20 @@ def _initialize_memory_tool(embedder: OpenAIEmbeddings) \
     return description, chain
 
 # %% ../nbs/09_server.ipynb 18
+embeddings_openai, embeddings = _initialize_openai_embedder_model(OPENAI_MEMORY_EMBEDDER_MODEL)
+memory_tool = _initialize_memory_tool(embedder=embeddings)
+
+
 def _initialize_agent(fallacy_callbacks: List[AsyncFunctionalStyleChatCompletionHandler],
                       agent_callbacks: List[AsyncFunctionalStyleChatCompletionHandler]) \
                          -> Tuple[ChatOpenAI, ChatOpenAI, OpenAIEmbeddings, RolePlayAgent]:
     fallacy_gpt, fallacy_llm = _initialize_openai_chat_model(OPENAI_FALLACY_MODEL, fallacy_callbacks)
     agent_gpt, agent_llm = _initialize_openai_chat_model(OPENAI_AGENT_MODEL, agent_callbacks)
-    embeddings_openai, embeddings = _initialize_openai_embedder_model(OPENAI_MEMORY_EMBEDDER_MODEL)
+    
     agent_gpt_encoding = tiktoken.encoding_for_model(agent_gpt.model_name)
     
     fallacy_tool = _initialize_fallacy_tool(fallacy_llm)
-    memory_tool = _initialize_memory_tool(embedder=embeddings)
+    
     tools = [fallacy_tool, memory_tool]
 
     agent = RolePlayAgent(
