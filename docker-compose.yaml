@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  pi_api_server:
+    build:
+      context: .  # The Dockerfile's location (current directory)
+      dockerfile: Dockerfile  # The Dockerfile's name
+    volumes:
+      - ./deployment/volumes/chromadb_data:/var/lib/chromadb
+    ports:
+      - "8766:8766"  # Make port 8766 accessible from the host on the same port
+    restart: unless-stopped  # Restart policy for the container
+    env_file: .env.deploy
+
+  pi_postgresql:
+    image: postgres:latest  # Use the latest official PostgreSQL image
+    volumes:
+      - ./deployment/volumes/postgresql_data:/var/lib/postgresql/data
+    env_file: .env.deploy
+    ports:
+      - "5432:5432" # Forward the PostgreSQL port (optional, remove this if you don't want to access it from the host)
+    restart: unless-stopped  # Restart policy for the container
