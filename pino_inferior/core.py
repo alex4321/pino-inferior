@@ -11,6 +11,7 @@ __all__ = ['PACKAGE_DIR', 'DATA_DIR', 'PROMPTS_DIR', 'OPENAI_AGENT_MODEL', 'OPEN
 # %% ../nbs/00_core.ipynb 2
 import langchain.vectorstores
 import json
+import logging
 
 # %% ../nbs/00_core.ipynb 3
 import nest_asyncio
@@ -53,7 +54,7 @@ def _load_dotenv():
             load_dotenv(dotenv_file)
             return
         path = os.path.dirname(path)
-    raise ValueError("Can't load .env file")
+    logging.warning("Can't load .env file")
 
 _load_dotenv()
 

@@ -12,18 +12,22 @@ RUN apt install -y gcc
 RUN conda install python=3.11.5
 
 # Copy the current directory contents into the container at /app
-COPY migration /app
-COPY pino_inferior /app
-COPY alembic.ini /app
-COPY settings.ini /app
-COPY setup.py /app
-COPY README.md /app
+COPY migration /app/migration
+COPY pino_inferior /app/pino_inferior
+COPY alembic.ini /app/alembic.ini
+COPY settings.ini /app/settings.ini
+COPY setup.py /app/setup.py
+COPY README.md /app/README.md
+COPY .env.deploy /app/.env.deploy
 
 # Install the Python package in editable mode with dependencies
+# Avoid version breaking by installing aiohttp before everything
+RUN python3 -m pip install aiohttp
 RUN python3 setup.py develop
 
 # Run Alembic migrations
-RUN python3 -m alembic upgrade head
+RUN bash -c "sed '/^$/d; s/^/export /' .env.deploy > .env.deploy.sh"
+RUN bash -c "source .env.deploy.sh; python3 -m alembic upgrade head"
 
 # Expose port 8766 for websockets
 EXPOSE 8766
